@@ -1,4 +1,6 @@
-import matplotlib.pyplot as plt
 import numpy as np
-from scipy.stats import poisson
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
+test = np.zeros(10)
+print(test)

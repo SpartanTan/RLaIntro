@@ -1,10 +1,10 @@
 from matplotlib import pyplot as plt
 import matplotlib.axes._axes as axes
 import matplotlib.figure as figure
-
 import numpy as np
 import seaborn as sns
 from scipy.stats import poisson
+import time
 
 # maximum number of cars in each location
 MAX_CARS = 20
@@ -111,7 +111,8 @@ def figure_4_2(constant_returned_cars=True):
     policy = np.zeros(value.shape, dtype=np.int)  # move from the first place to second
 
     iterations = 0
-    _, ax = plt.subplots(2, 3, figsize=(40, 20))  # type: figure.Figure, axes.Axes
+    # 40 20
+    ffigure, ax = plt.subplots(2, 3, figsize=(40, 20))  # type: figure.Figure, axes.Axes
     plt.subplots_adjust(wspace=0.1, hspace=0.2)
     ax = ax.flatten()
     while True:
@@ -159,9 +160,22 @@ def figure_4_2(constant_returned_cars=True):
             break
 
         iterations += 1
+        # plotting
 
-        plt.savefig('figure_4_2.png')
-        # plt.show()
-        plt.close()
+        # re-drawing the figure
+        # ffigure.canvas.draw()
+        # # to flush the GUI events
+        # ffigure.canvas.flush_events()
+        # time.sleep(0.1)
+        # end of interaction
+
+        # plt.draw()
+        # plt.pause(0.001)
+        # plt.clf()
+    plt.savefig('figure_4_2.png')
+        # plt.close()
+
+
 if __name__ == '__main__':
+    # plt.ion()
     figure_4_2()

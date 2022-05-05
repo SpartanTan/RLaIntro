@@ -121,6 +121,7 @@ def figure_3_2():
     """draw a picture with state-value function for random policy
     """
     value = np.zeros((WORLD_SIZE, WORLD_SIZE))
+    iterations = 0
     while True:
         # keep iteration until converage
         new_value = np.zeros_like(value)
@@ -128,14 +129,18 @@ def figure_3_2():
             for j in range(WORLD_SIZE):
                 for action in ACTIONS:
                     (next_i, next_j), reward = step([i, j], action)
-                    # v(s) = Sigma pi(a|s) Sigma p(s',r|s,a)[r + discount * v(s')]
+                    # v(s) = Sigma pi(a|s) Sigma p(s',r|s,a)[r + discount * v(s')], p(s',r|s,a)=1
                     new_value[i, j] += ACTION_PROB * (reward + DISCOUNT * value[next_i, next_j])
+        # print("iteration: {}".format(iterations))
+        # plt.show()
+        # draw_image(np.round(new_value, decimals=2))
         if np.sum(np.abs(value - new_value)) < 1e-4:
             draw_image(np.round(new_value, decimals=2))
             plt.savefig('figure_3_2.png')
             plt.show()
             break
         value = new_value
+        iterations += 1
 
 
 def figure_3_2_linear_system():
@@ -176,5 +181,7 @@ def figure_3_5():
 
 
 if __name__ == '__main__':
+    # example 3.5
     # figure_3_2()
+    # example 3.8
     figure_3_5()

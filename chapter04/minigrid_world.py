@@ -16,6 +16,8 @@ ACTIONS_FIGS = ['←', '↑', '→', '↓']
 
 ACTION_PROB = 0.25
 
+fig, ax = plt.subplots()
+
 
 def is_terminal(state: list) -> bool:
     x, y = state
@@ -47,7 +49,7 @@ def step(state: list, action: np.ndarray) -> (list, int):
 
 
 def draw_image(image: np.ndarray):
-    fig, ax = plt.subplots()
+    # fig, ax = plt.subplots()
     ax.set_axis_off()
     tb = Table(ax, bbox=[0, 0, 1, 1])
 
@@ -69,9 +71,9 @@ def compute_state_value(in_place=True, discount=1.0):
     iteration = 0
     while True:
         if in_place:
-            state_values = new_state_values # sate_value points to the new_state_value
+            state_values = new_state_values  # sate_value points to the new_state_value
         else:
-            state_values = new_state_values.copy() # a full copy
+            state_values = new_state_values.copy()  # a full copy
         old_state_values = state_values.copy()
 
         for i in range(WORLD_SIZE):
@@ -85,6 +87,8 @@ def compute_state_value(in_place=True, discount=1.0):
         if max_delta_value < 1e-4:
             break
         iteration += 1
+        # draw_image(np.round(state_values, decimals=2))
+        # plt.pause(0.0001)
 
     return new_state_values, iteration
 
@@ -97,7 +101,7 @@ def figure_4_1():
     print('Synchronous: {} iterations'.format(sync_iteration))
 
     plt.savefig('figure_4_1.png')
-    plt.show()
 
 if __name__ == '__main__':
+    # plt.ion()
     figure_4_1()
