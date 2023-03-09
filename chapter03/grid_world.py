@@ -71,7 +71,8 @@ def draw_image(image: np.ndarray):
     for i in range(len(image)):
         tb.add_cell(i, -1, width, height, text=i + 1, loc='right', edgecolor='none', facecolor='none')
         tb.add_cell(-1, i, width, height, text=i + 1, loc='right', edgecolor='none', facecolor='none')
-        ax.add_table(tb)
+
+    ax.add_table(tb)
 
 
 def draw_policy(optimal_values):
@@ -177,7 +178,7 @@ def figure_3_5():
             # plt.close()
             plt.show()
             break
-        value = new_value # value*
+        value = new_value  # value*
 
 
 if __name__ == '__main__':
