@@ -18,7 +18,8 @@ def poisson_probability(n, lam):
 
 
 if __name__ == "__main__":
-    testable = np.random.randint(5, size=(2, 2, 2))
-    print(testable)
-    print(testable[:, :, 1])
+    arr1 = np.asarray([1, 2, 3, 4])
+    arr2 = np.asarray([2, 0, 2, 2])
+
+    print(arr2 != 0)
     # print(np.max(testable))

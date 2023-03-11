@@ -332,6 +332,8 @@ def monte_carlo_off_policy(episodes):
         _, reward, player_trajectory = play(behavior_policy_player, initial_state, )
 
         # get the importance ratio
+        # numerator: pi(Ak|Sk)
+        # denominator: b(Ak|Sk)
         numerator = 1.0
         denominator = 1.0
 
@@ -339,14 +341,35 @@ def monte_carlo_off_policy(episodes):
             if action == target_policy_player(usable_ace, player_sum, dealer_card):
                 denominator *= 0.5
             else:
+                # if the action under b policy is different from the action
+                # under pi policy, then pi(Ak|Sk) = 0, so that the numerator
+                # is 0, then abort from this trajectory
                 numerator = 0.0
                 break
+
+        # the importance sampling ratio
         rho = numerator / denominator
         rhos.append(rho)
         returns.append(reward)
 
+    # after all the episodes
     rhos = np.asarray(rhos)
     returns = np.asarray(returns)
+    weighted_returns = rhos * returns
+    weighted_returns = np.add.accumulate(weighted_returns)
+    rhos = np.add.accumulate(rhos)
+
+    # ordinary importance sampling
+    # V(s) = Sig(rhot * Gt)/|J(s)|
+    # the state s is given by the initial condition
+    # It means every time we start from this state, followed by policy b, then
+    # termination. One episode is one time step of visiting S.
+    # Thus the set J(s) stores 1....number_of_episodes
+    ordinary_sampling = weighted_returns / np.arange(1, episodes + 1)
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        weighted_sampling = np.where(rhos != 0, weighted_returns / rhos, 0)
+    return ordinary_sampling, weighted_sampling
 
 
 def figure_5_1():
@@ -424,8 +447,32 @@ def figure_5_3():
     """
     true_value = -0.27726
     episodes = 10000
+    runs = 100
+
+    error_ordinary = np.zeros(episodes)
+    error_weighted = np.zeros(episodes)
+
+    for i in tqdm(range(0, runs)):
+        ordinary_sampling_, weighted_sampling_ = monte_carlo_off_policy(episodes)
+        # get the squared error
+        error_ordinary += np.power(ordinary_sampling_ - true_value, 2)
+        error_weighted += np.power(weighted_sampling_ - true_value, 2)
+
+    error_ordinary /= runs
+    error_weighted /= runs
+
+    plt.plot(np.arange(1, episodes + 1), error_ordinary, color='green', label='Ordinary Importance Sampling')
+    plt.plot(np.arange(1, episodes + 1), error_weighted, color='red', label='Weighted Importance Sampling')
+    plt.ylim(-0.1, 5)
+    plt.xlabel('Episodes (log scale)')
+    plt.ylabel(f'Mean square error\n(average over {runs} runs)')
+    plt.xscale('log')
+    plt.legend()
+
+    plt.show()
 
 
 if __name__ == '__main__':
     # figure_5_1()
-    figure_5_2()
+    # figure_5_2()
+    figure_5_3()
