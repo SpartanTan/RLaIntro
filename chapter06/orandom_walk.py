@@ -28,6 +28,7 @@ TRUE_VALUE[6] = 1
 ACTION_LEFT = 0
 ACTION_RIGHT = 1
 
+
 # @values: current states value, will be updated if @batch is False
 # @alpha: step size
 # @batch: whether to update @values
@@ -51,6 +52,7 @@ def temporal_difference(values, alpha=0.1, batch=False):
             break
         rewards.append(reward)
     return trajectory, rewards
+
 
 # @values: current states value, will be updated if @batch is False
 # @alpha: step size
@@ -80,6 +82,7 @@ def monte_carlo(values, alpha=0.1, batch=False):
             values[state_] += alpha * (returns - values[state_])
     return trajectory, [returns] * (len(trajectory) - 1)
 
+
 # Example 6.2 left
 def compute_state_value():
     episodes = [0, 1, 10, 100]
@@ -93,6 +96,7 @@ def compute_state_value():
     plt.xlabel('State')
     plt.ylabel('Estimated Value')
     plt.legend()
+
 
 # Example 6.2 right
 def rms_error():
@@ -125,6 +129,7 @@ def rms_error():
     plt.ylabel('Empirical RMS error, averaged over states')
     plt.legend()
 
+
 # Figure 6.2
 # @method: 'TD' or 'MC'
 def batch_updating(method, episodes, alpha=0.001):
@@ -151,7 +156,8 @@ def batch_updating(method, episodes, alpha=0.001):
                 for trajectory_, rewards_ in zip(trajectories, rewards):
                     for i in range(0, len(trajectory_) - 1):
                         if method == 'TD':
-                            updates[trajectory_[i]] += rewards_[i] + current_values[trajectory_[i + 1]] - current_values[trajectory_[i]]
+                            updates[trajectory_[i]] += rewards_[i] + current_values[trajectory_[i + 1]] - \
+                                                       current_values[trajectory_[i]]
                         else:
                             updates[trajectory_[i]] += rewards_[i] - current_values[trajectory_[i]]
                 updates *= alpha
@@ -165,6 +171,7 @@ def batch_updating(method, episodes, alpha=0.001):
     total_errors /= runs
     return total_errors
 
+
 def example_6_2():
     plt.figure(figsize=(10, 20))
     plt.subplot(2, 1, 1)
@@ -176,6 +183,7 @@ def example_6_2():
     #
     # plt.savefig('../images/example_6_2.png')
     # plt.close()
+
 
 def figure_6_2():
     episodes = 100 + 1
@@ -190,11 +198,12 @@ def figure_6_2():
     plt.xlim(0, 100)
     plt.ylim(0, 0.25)
     plt.legend()
+    plt.show()
+    # plt.savefig('../images/figure_6_2.png')
+    # plt.close()
 
-    plt.savefig('../images/figure_6_2.png')
-    plt.close()
 
 if __name__ == '__main__':
-    example_6_2()
-    # figure_6_2()
-    plt.show()
+    # example_6_2()
+    figure_6_2()
+    # plt.show()
