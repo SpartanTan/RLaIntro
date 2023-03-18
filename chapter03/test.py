@@ -18,5 +18,7 @@ def poisson_probability(n, lam):
 
 
 if __name__ == "__main__":
-    test = [3]
-    print(test * 3)
+    optimal_policy = []
+    optimal_policy.append([])
+    optimal_policy[-1].append('C')
+    print(optimal_policy)

@@ -1,21 +1,10 @@
-#######################################################################
-# Copyright (C)                                                       #
-# 2016-2018 Shangtong Zhang(zhangshangtong.cpp@gmail.com)             #
-# 2016 Kenta Shimada(hyperkentakun@gmail.com)                         #
-# Permission given to modify the code as long as you keep this        #
-# declaration at the top                                              #
-#######################################################################
-
 import numpy as np
-import matplotlib
-
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-# world height
+# World height
 WORLD_HEIGHT = 7
 
-# world width
+# World width
 WORLD_WIDTH = 10
 
 # wind strength for each column
@@ -33,15 +22,15 @@ EPSILON = 0.1
 # Sarsa step size
 ALPHA = 0.5
 
-# reward for each step
-REWARD = -1.0
+# reward
+REWARD = -1
 
 START = [3, 0]
 GOAL = [3, 7]
 ACTIONS = [ACTION_UP, ACTION_DOWN, ACTION_LEFT, ACTION_RIGHT]
 
 
-def step(state, action):
+def step(state: list, action: int):
     i, j = state
     if action == ACTION_UP:
         return [max(i - 1 - WIND[j], 0), j]
@@ -55,35 +44,32 @@ def step(state, action):
         assert False
 
 
-# play for an episode
-def episode(q_value):
+def episode(q_value: np.ndarray):
     # track the total time steps in this episode
     time = 0
-
-    # initialize state
+    # Initialize S
     state = START
-
-    # choose an action based on epsilon-greedy algorithm
+    # Choose A from S using epsilon-greedy
     if np.random.binomial(1, EPSILON) == 1:
         action = np.random.choice(ACTIONS)
     else:
         values_ = q_value[state[0], state[1], :]
         action = np.random.choice([action_ for action_, value_ in enumerate(values_) if value_ == np.max(values_)])
-
-    # keep going until get to the goal state
+    # Loop for each step of episode
     while state != GOAL:
+        # Take action A, observe R and S'
         next_state = step(state, action)
+        # Choose A' from S' using epsilon-greedy
         if np.random.binomial(1, EPSILON) == 1:
             next_action = np.random.choice(ACTIONS)
         else:
             values_ = q_value[next_state[0], next_state[1], :]
             next_action = np.random.choice(
                 [action_ for action_, value_ in enumerate(values_) if value_ == np.max(values_)])
-
-        # Sarsa update
+        # Q(S,A) <- Q(S,A) + alpha * (R + gamma * Q(S',A') - Q(S,A))
         q_value[state[0], state[1], action] += \
-            ALPHA * (REWARD + q_value[next_state[0], next_state[1], next_action] -
-                     q_value[state[0], state[1], action])
+            ALPHA * (REWARD + 1 * q_value[next_state[0], next_state[1], next_action] - q_value[
+                state[0], state[1], action])
         state = next_state
         action = next_action
         time += 1
@@ -91,27 +77,35 @@ def episode(q_value):
 
 
 def figure_6_3():
+    # Initialize Q(S,A)
+    # 7x10x4 space
+    # 4 representing the action space
     q_value = np.zeros((WORLD_HEIGHT, WORLD_WIDTH, 4))
     episode_limit = 500
 
     steps = []
     ep = 0
+
+    # Loop for each episode
     while ep < episode_limit:
-        steps.append(episode(q_value))
-        # time = episode(q_value)
-        # episodes.extend([ep] * time)
+        # number of time steps in this episode
+        n_times = episode(q_value)
+        steps.append(n_times)
+
+        # mark the finish of one episode
         ep += 1
 
     steps = np.add.accumulate(steps)
 
+    # uncomment this to plot the number of step times in each episode
+    # plt.plot(np.arange(1, len(steps) + 1), steps)
+
     plt.plot(steps, np.arange(1, len(steps) + 1))
     plt.xlabel('Time steps')
     plt.ylabel('Episodes')
+    plt.show()
 
-    # plt.savefig('../images/figure_6_3.png')
-    # plt.close()
-
-    # display the optimal policy
+    # display optimal policy
     optimal_policy = []
     for i in range(0, WORLD_HEIGHT):
         optimal_policy.append([])
@@ -128,7 +122,7 @@ def figure_6_3():
                 optimal_policy[-1].append('L')
             elif bestAction == ACTION_RIGHT:
                 optimal_policy[-1].append('R')
-    print('Optimal policy is:')
+    print('Optimal policy is: ')
     for row in optimal_policy:
         print(row)
     print('Wind strength for each column:\n{}'.format([str(w) for w in WIND]))
