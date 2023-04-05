@@ -194,4 +194,4 @@ def print_optimal_policy(q_value):
 
 if __name__ == "__main__":
     figure_6_4()
-    figure_6_3()
+    # figure_6_3()
