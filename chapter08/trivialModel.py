@@ -8,6 +8,7 @@ class TrivialModel:
     """
 
     def __init__(self, rand=np.random):
+        # {tuple(state): {[action]: [list(next_state), reward]}, ...}
         self.model = dict()
         self.rand = rand
 

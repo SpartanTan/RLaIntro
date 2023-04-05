@@ -9,7 +9,7 @@
 import numpy as np
 import matplotlib
 
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import heapq
@@ -520,8 +520,9 @@ def figure_8_4():
     plt.ylabel('cumulative reward')
     plt.legend()
 
-    plt.savefig('../images/figure_8_4.png')
-    plt.close()
+    plt.show()
+    # plt.savefig('../images/figure_8_4.png')
+    # plt.close()
 
 
 # Figure 8.5, ShortcutMaze
@@ -659,13 +660,13 @@ def example_8_4():
     plt.ylabel('backups until optimal solution')
     plt.yscale('log')
     plt.legend()
-
-    plt.savefig('../images/example_8_4.png')
-    plt.close()
+    plt.show()
+    # plt.savefig('../images/example_8_4.png')
+    # plt.close()
 
 
 if __name__ == '__main__':
-    figure_8_2()
-    figure_8_4()
-    figure_8_5()
+    # figure_8_2()
+    # figure_8_4()
+    # figure_8_5()
     example_8_4()
