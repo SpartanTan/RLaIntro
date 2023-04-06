@@ -1,66 +1,41 @@
-import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.figure as figure
-import matplotlib.axes as axes
-from matplotlib.table import Table
-from typing import List, Optional
-from scipy.stats import poisson
+import numpy as np
 
-import heapq
-from copy import deepcopy
+# create some sample data
+x = np.linspace(0, 10, 100)
+y1 = np.sin(x)
+y2 = np.cos(x)
+y3 = np.tan(x)
 
+# create the figure and gridspec
+fig = plt.figure(figsize=(12, 12))
+gs = fig.add_gridspec(nrows=2, ncols=2)
 
-class PriorityQueue:
-    def __init__(self):
-        self.pq = []  # [[priority, self.counter, item], [priority, self.counter, item],...]
-        self.entry_finder = {}
-        self.REMOVED = '<removed-task>'
-        self.counter = 0
+# create the subplots
+ax1 = fig.add_subplot(gs[0, 0])
+ax2 = fig.add_subplot(gs[0, 1])
+ax3 = fig.add_subplot(gs[1, :])
 
-    def add_item(self, item, priority=0):
-        if item in self.entry_finder:
-            self.remove_item(item)
-        entry = [priority, self.counter, item]
-        self.counter += 1
-        self.entry_finder[item] = entry
-        heapq.heappush(self.pq, entry)
+# plot the data on the subplots
+ax1.plot(x, y1)
+ax2.plot(x, y2)
+ax3.plot(x, y3)
 
-    def remove_item(self, item):
-        entry = self.entry_finder.pop(item)
-        entry[-1] = self.REMOVED
+# set the title and labels for each subplot
+ax1.set_title('sin(x)')
+ax2.set_title('cos(x)')
+ax3.set_title('tan(x)')
 
-    def pop_item(self):
-        while self.pq:
-            priority, count, item = heapq.heappop(self.pq)
-            if item is not self.REMOVED:
-                del self.entry_finder[item]
-                return item, priority
-        raise KeyError('pop from an empty priority queue')
+ax1.set_xlabel('x')
+ax2.set_xlabel('x')
+ax3.set_xlabel('x')
 
-    def empty(self):
-        return not self.entry_finder
+ax1.set_ylabel('y')
+ax2.set_ylabel('y')
+ax3.set_ylabel('y')
 
+# adjust the spacing between subplots
+plt.subplots_adjust(wspace=0.3, hspace=0.5)
 
-if __name__ == "__main__":
-    priority_queue = PriorityQueue()
-
-    item = (tuple([1, 1]), 1)
-    # priority 1: 1
-    # priority 2: 2
-    priority_queue.add_item(item, -1)
-    print(priority_queue.pq)
-    print(priority_queue.entry_finder)
-
-    print("cg")
-    priority_queue.add_item(item, -2)
-    print(priority_queue.pq)
-    print(priority_queue.entry_finder)
-
-    print("cg")
-    item = (tuple([2, 2]), 1)
-    priority_queue.add_item(item, -3)
-    print(priority_queue.pq)
-    print(priority_queue.entry_finder)
-
-    print(priority_queue.pop_item())
-    print(priority_queue.pop_item())
+# show the plot
+plt.show()
