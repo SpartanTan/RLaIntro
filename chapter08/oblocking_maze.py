@@ -744,7 +744,7 @@ if __name__ == '__main__':
     ## 1) Shifting obstacles
 
     # Reproduces book's figure 8.4
-    get_cumu_reward_curves_comparison(modifying_mode='blocking')
+    # get_cumu_reward_curves_comparison(modifying_mode='blocking')
 
     # Video comparison to visualize Dyna-Q & DynaQ+ on the blocking maze task
     # run_real_time_dislay_modified_maze(modifying_mode='blocking')
@@ -752,7 +752,7 @@ if __name__ == '__main__':
     ## 2) Opening shortcut
 
     # Reproduces book's figure 8.5
-    get_cumu_reward_curves_comparison(modifying_mode='shortcut')
+    # get_cumu_reward_curves_comparison(modifying_mode='shortcut')
 
     # Video comparison to visualize Dyna-Q & DynaQ+ on the shortcut opening maze task
     run_real_time_dislay_modified_maze(modifying_mode='shortcut')
