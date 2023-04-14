@@ -3,6 +3,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import os
+from typing import Union
 
 # # of states except for terminal states
 N_STATES = 1000
@@ -26,7 +27,11 @@ ACTIONS = [ACTION_LEFT, ACTION_RIGHT]
 STEP_RANGE = 100
 
 
-def compute_true_value():
+def compute_true_value() -> np.ndarray:
+    """
+    compute the true state values for 1000 state random walk
+    @return: ndarray, [1002 * 1]
+    """
     # true state value, just a promising guess
     true_value = np.arange(-1001, 1003, 2) / 1001.0
     # Dynamic programming to find the true state values, based on the promising guess above
@@ -112,7 +117,46 @@ class ValueFunction:
         self.params[group_index] += delta
 
 
-def gradient_monte_carlo(value_function: ValueFunction, alpha: float, distribution=None):
+# a wrapper class for polynomial / Fourier -based value function
+POLYNOMIAL_BASES = 0
+FOURIER_BASES = 1
+
+
+class BasesValueFunction:
+    def __init__(self, order: int, type: int):
+        self.order = order
+        self.weights = np.zeros(order + 1)
+
+        # set up bases function
+        self.bases = []
+        if type == POLYNOMIAL_BASES:
+            for i in range(0, order + 1):
+                self.bases.append(lambda s, i=i: pow(s, i))
+        elif type == FOURIER_BASES:
+            for i in range(0, order + 1):
+                self.bases.append(lambda s, i=i: np.cos(i * np.pi * s))
+
+    def value(self, state):
+        # map the state space into [0, 1]
+        state /= float(N_STATES)
+        # get the feature vector
+        feature = np.asarray([func(state) for func in self.bases])
+        return np.dot(self.weights, feature)
+
+    def update(self, delta, state):
+        """
+        w<-w + delta * derivative_value
+        @param delta:
+        @param state:
+        """
+        # map the state spce into [0, 1]
+        state /= float(N_STATES)
+        # get derivative value
+        derivative_value = np.asarray([func(state) for func in self.bases])
+        self.weights += delta * derivative_value
+
+
+def gradient_monte_carlo(value_function: Union[ValueFunction, BasesValueFunction], alpha: float, distribution=None):
     """
     gradient Monte Carlo algorithm
     @param value_function:
@@ -135,6 +179,52 @@ def gradient_monte_carlo(value_function: ValueFunction, alpha: float, distributi
         value_function.update(delta, state)
         if distribution is not None:
             distribution[state] += 1
+
+
+def semi_gradient_temporal_difference(value_function: ValueFunction, n, alpha: float):
+    state = START_STATE
+    states = [state]
+    rewards = [0]
+
+    # track the time
+    time = 0
+
+    # the length of this episode
+    T = float('inf')
+
+    while True:
+        # go to next time step
+        time += 1
+
+        if time < T:
+            # choose an action randomly
+            action = get_action()
+            next_state, reward = step(state, action)
+
+            # store new state and new reward
+            states.append(next_state)
+            rewards.append(reward)
+
+            if next_state in END_STATES:
+                T = time
+
+        # get the time of the state to update
+        update_time = time - n
+        if update_time >= 0:
+            returns = 0.0
+            for t in range(update_time + 1, min(T, update_time + n) + 1):
+                returns += rewards[t]
+            # add state value to the return
+            if update_time + n < T:
+                returns += value_function.value(states[update_time + n])
+            state_to_update = states[update_time]
+            # update the value function
+            if not state_to_update in END_STATES:
+                delta = alpha * (returns - value_function.value(state_to_update))
+                value_function.update(delta, state_to_update)
+        if update_time == T - 1:
+            break
+        state = next_state
 
 
 def figure_9_1(true_value):
@@ -169,6 +259,115 @@ def figure_9_1(true_value):
     plt.show()
 
 
+def figure_9_2_left(true_value):
+    """
+    semi-gradient TD on 1000-state random walk
+    @param true_value:
+    """
+    episodes = int(1e5)
+    alpha = 2e-4
+    value_function = ValueFunction(10)
+    for ep in tqdm(range(episodes)):
+        semi_gradient_temporal_difference(value_function, 1, alpha)
+
+    stateValues = [value_function.value(i) for i in STATES]
+    plt.plot(STATES, stateValues, label='Approximate TD value')
+    plt.plot(STATES, true_value[1: -1], label='True value')
+    plt.xlabel('State')
+    plt.ylabel('Value')
+    plt.legend()
+
+
+def figure_9_2_right(true_value):
+    """
+    different alphas and steps for semi-gradient TD
+    @param true_value:
+    """
+    # all possible steps
+    steps = np.power(2, np.arange(0, 10))
+
+    # all possible alphas
+    alphas = np.arange(0, 1.1, 0.1)
+
+    # each run has 10 episodes
+    episodes = 10
+
+    # perform 100 independent runs
+    runs = 100
+
+    # track the errors for each (step, alpha) combination
+    errors = np.zeros((len(steps), len(alphas)))
+
+    for run in tqdm(range(runs)):
+        for step_ind, step in zip(range(len(steps)), steps):
+            for alpha_ind, alpha in zip(range(len(alphas)), alphas):
+                # we have 20 aggregations in this example
+                value_function = ValueFunction(20)
+                for ep in range(0, episodes):
+                    semi_gradient_temporal_difference(value_function, step, alpha)
+                    # calculate the RMS error
+                    state_value = np.asarray([value_function.value(i) for i in STATES])
+                    errors[step_ind, alpha_ind] += np.sqrt(
+                        np.sum(np.power(state_value - true_value[1: -1], 2)) / N_STATES)
+
+    # take average
+    errors /= episodes * runs
+    # truncate the error
+    for i in range(len(steps)):
+        plt.plot(alphas, errors[i, :], label='n = ' + str(steps[i]))
+    plt.xlabel('alpha')
+    plt.ylabel('RMS error')
+    plt.ylim([0.25, 0.55])
+    plt.legend()
+
+
+def figure_9_2(true_value):
+    plt.figure(figsize=(10, 20))
+    plt.subplot(2, 1, 1)
+    figure_9_2_left(true_value)
+    plt.subplot(2, 1, 2)
+    figure_9_2_right(true_value)
+
+    plt.show()
+
+
+def figure_9_5(true_value):
+    runs = 1
+    episodes = 5000
+    # # of bases
+    orders = [5, 10, 20]
+
+    alphas = [1e-4, 5e-5]
+    labels = [['polynomial basis'] * 3, ['fourier basis'] * 3]
+
+    # track errors for each episode
+    errors = np.zeros((len(alphas), len(orders), episodes))
+    for run in range(runs):
+        for i in range(len(orders)):
+            value_functions = [BasesValueFunction(orders[i], POLYNOMIAL_BASES),
+                               BasesValueFunction(orders[i], FOURIER_BASES)]
+            for j in range(len(value_functions)):
+                for episode in tqdm(range(episodes)):
+                    # gradient Monte Carlo algorithm
+                    gradient_monte_carlo(value_functions[j], alphas[j])
+                    # get state values under current value function
+                    state_values = [value_functions[j].value(state) for state in STATES]
+
+                    # get the root-mean-squared error
+                    errors[j, i, episode] += np.sqrt(np.mean(np.power(true_value[1: -1] - state_values, 2)))
+    # average over independent runs
+    errors /= runs
+    for i in range(len(alphas)):
+        for j in range(len(orders)):
+            plt.plot(errors[i, j, :], label='%s order = %d' % (labels[i][j], orders[j]))
+    plt.xlabel('Episodes')
+    # The book plots RMSVE, which is RMSE weighted by a state distribution
+    plt.ylabel('RMSE')
+    plt.legend()
+
+    plt.show()
+
+
 if __name__ == "__main__":
     file_name = "true_value.npy"
 
@@ -180,4 +379,6 @@ if __name__ == "__main__":
         true_value = compute_true_value()
         np.save(file_name, true_value)
         print("true value calculated and saved")
-    figure_9_1(true_value)
+    # figure_9_1(true_value)
+    # figure_9_2(true_value)
+    figure_9_5(true_value)
