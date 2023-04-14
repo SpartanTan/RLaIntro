@@ -156,6 +156,50 @@ class BasesValueFunction:
         self.weights += delta * derivative_value
 
 
+class TilingsValueFunction:
+    def __init__(self, numOfTilings, tileWidth, tilingOffset):
+        """
+
+        @param numOfTilings: # of tilings
+        @param tileWidth: each tiling has several tiles, this parameter specifies the width of each tile
+        @param tilingOffset: specifies how tilings are put together
+        """
+        self.numOfTilings = numOfTilings
+        self.tileWidth = tileWidth
+        self.tilingOffset = tilingOffset
+
+        # To make sure that each sate is covered by same number of tiles,
+        # we need one more tile for each tiling
+        self.tilingSize = N_STATES // tileWidth + 1
+
+        # weight for each tile
+        self.params = np.zeros((self.numOfTilings, self.tilingSize))
+
+        # For performance, only track the starting position for each tiling
+        # As we have one more tile for each tiling, the starting position will be negative
+        self.tilings = np.arange(-tileWidth + 1, 0, tilingOffset)
+
+    def value(self, state):
+        stateValue = 0.0
+        # go through all the tilings
+        for tilingIndex in range(0, len(self.tilings)):
+            # find the active tile in current tiling
+            tileIndex = (state - self.tilings[tilingIndex]) // self.tileWidth
+            stateValue += self.params[tilingIndex, tileIndex]
+        return stateValue
+
+    def update(self, delta, state):
+        # each state is covered by same number of tilings
+        # so the delta should be divided equally into each tiling (tile)
+        delta /= self.numOfTilings
+
+        # go through all the tilings
+        for tilingIndex in range(0, len(self.tilings)):
+            # find the active tile in current tiling
+            tileIndex = (state - self.tilings[tilingIndex]) // self.tileWidth
+            self.params[tilingIndex, tileIndex] += delta
+
+
 def gradient_monte_carlo(value_function: Union[ValueFunction, BasesValueFunction], alpha: float, distribution=None):
     """
     gradient Monte Carlo algorithm
@@ -368,6 +412,58 @@ def figure_9_5(true_value):
     plt.show()
 
 
+def figure_9_10(true_value):
+    runs = 1
+    # number of episodes
+    episodes = 5000
+    num_of_tilings = 50
+
+    # each tile will cover 200 states
+    tile_width = 200
+
+    # how to put so many tilings
+    tiling_offset = 4
+
+    labels = ['tile coding (50 tilings)', 'state aggregation (one tiling)']
+
+    # track errors for each episode
+    errors = np.zeros((len(labels), episodes))
+
+    for run in range(runs):
+        # initialize value functions for multiple tilings and single tiling
+        value_functions = [TilingsValueFunction(num_of_tilings, tile_width, tiling_offset),
+                           ValueFunction(N_STATES // tile_width)]
+        for i in range(len(value_functions)):
+            for episode in tqdm(range(episodes)):
+                # I use a changing alpha according to the episode instead of a small fixed alpha
+                # With a small fixed alpha, I don't think 5000 episodes is enough for so many
+                # parameters in multiple tilings.
+                # The asymptotic performance for single tiling stays unchanged under a changing alpha,
+                # however the asymptotic performance for multiple tilings improves significantly
+                alpha = 1.0 / (episode + 1)
+
+                # gradient Monte Carlo algorithm
+                gradient_monte_carlo(value_functions[i], alpha)
+
+                # get state values under current value function
+                state_values = [value_functions[i].value(state) for state in STATES]
+
+                # get the root-mean-squared error
+                errors[i][episode] += np.sqrt(np.mean(np.power(true_value[1: -1] - state_values, 2)))
+
+        # average over independent runs
+    errors /= runs
+
+    for i in range(0, len(labels)):
+        plt.plot(errors[i], label=labels[i])
+    plt.xlabel('Episodes')
+    # The book plots RMSVE, which is RMSE weighted by a state distribution
+    plt.ylabel('RMSE')
+    plt.legend()
+
+    plt.show()
+
+
 if __name__ == "__main__":
     file_name = "true_value.npy"
 
@@ -381,4 +477,5 @@ if __name__ == "__main__":
         print("true value calculated and saved")
     # figure_9_1(true_value)
     # figure_9_2(true_value)
-    figure_9_5(true_value)
+    # figure_9_5(true_value)
+    figure_9_10(true_value)
