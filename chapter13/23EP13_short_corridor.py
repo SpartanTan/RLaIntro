@@ -178,7 +178,7 @@ def trial(num_episodes, agent_generator):
 
 
 def example_13_1():
-    epsilon = 0.05
+    epsilon = 0.1
     fig, ax = plt.subplots(1, 1)
     # Plot a graph
     p = np.linspace(0.01, 0.99, 100)
@@ -191,8 +191,8 @@ def example_13_1():
     ymax = y[imax]
     ax.plot(pmax, ymax, color='green', marker="*", label="optimal point: f({0:.2f}) = {1:.2f}".format(pmax, ymax))
     # Plot points of two epsilon-greedy policies
-    ax.plot(epsilon, true_value(epsilon), color='magenta', marker="o", label="epsilon-greedy left")
-    ax.plot(1 - epsilon, true_value(1 - epsilon), color='blue', marker="o", label="epsilon-greedy right")
+    ax.plot(epsilon / 2, true_value(epsilon / 2), color='magenta', marker="o", label="epsilon-greedy left")
+    ax.plot(1 - epsilon / 2, true_value(1 - epsilon / 2), color='blue', marker="o", label="epsilon-greedy right")
 
     ax.set_ylabel("Value of the first state")
     ax.set_xlabel("Probability of the action 'right'")
@@ -253,6 +253,6 @@ def figure_13_2():
 
 
 if __name__ == '__main__':
-    # example_13_1()
+    example_13_1()
     # figure_13_1()
-    figure_13_2()
+    # figure_13_2()

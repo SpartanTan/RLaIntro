@@ -55,7 +55,7 @@ class ValueFunction:
 
     def value(self, position, velocity, action):
         """
-        get tje current state-action pair value
+        get the current state-action pair value
         @param position:
         @param velocity:
         @param action:
