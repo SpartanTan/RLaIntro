@@ -115,17 +115,59 @@ class OffLineLambdaReturn(ValueFunction):
 
 
 #
-# class TemporalDifferenceLambda(ValueFunction):
-#     """
-#     TD(lamnda) algorithm
-#     """
-#
-#     def __init__(self, rate, step_size):
-#         ValueFunction.__init__(self, rate, step_size)
-#         self.rate_truncate = 1e-3
-#
-#     def new_episode(self):
-#         self.eligibility *= self.rate
+class TemporalDifferenceLambda(ValueFunction):
+    """
+    TD(lamnda) algorithm
+    """
+
+    def __init__(self, rate, step_size):
+        ValueFunction.__init__(self, rate, step_size)
+        self.rate_truncate = 1e-3
+        self.new_episode()
+
+    def new_episode(self):
+        # initialize the eligibility trace
+        self.eligibility = np.zeros(N_STATES + 2)
+        # initialize the beginning state
+        self.last_state = START_STATE
+
+    def learn(self, state, reward):
+        # update the eligibility trace and weights
+        self.eligibility *= self.rate
+        self.eligibility[self.last_state] += 1
+        delta = reward + self.value(state) - self.value(self.last_state)
+        delta *= self.step_size
+        self.weights += delta * self.eligibility
+        self.last_state = state
+
+
+class TrueOnlineTemporalDifferenceLambda(ValueFunction):
+    def __init__(self, rate, step_size):
+        ValueFunction.__init__(self, rate, step_size)
+
+    def new_episode(self):
+        # initialize the eligibility trace
+        self.eligibility = np.zeros(N_STATES + 2)
+        # initialize the beginning state
+        self.last_state = START_STATE
+        # initialize the old state value
+        self.old_state_value = 0.0
+
+    def learn(self, state, reward):
+        # update the eligibility trace and weights
+        last_state_value = self.value(self.last_state)
+        state_value = self.value(state)
+        dutch = 1 - self.step_size * self.rate * self.eligibility[self.last_state]
+        self.eligibility *= self.rate
+        self.eligibility[self.last_state] += dutch
+
+        delta = reward + state_value - last_state_value
+        self.weights += self.step_size * (delta + last_state_value - self.old_state_value) * self.eligibility
+        self.weights[self.last_state] -= self.step_size * (last_state_value - self.old_state_value)
+
+        self.old_state_value = state_value
+        self.last_state = state
+
 
 def random_walk(value_function):
     value_function.new_episode()
@@ -183,5 +225,40 @@ def figure_12_3():
     parameter_sweep(OffLineLambdaReturn, 50, lambdas, alphas)
 
 
+def figure_12_6():
+    """
+    TD(lambda) algorithm
+    """
+    lambdas = [0.0, 0.4, 0.8, 0.9, 0.95, 0.975, 0.99, 1]
+    alphas = [np.arange(0, 1.1, 0.1),
+              np.arange(0, 1.1, 0.1),
+              np.arange(0, 0.99, 0.09),
+              np.arange(0, 0.55, 0.05),
+              np.arange(0, 0.33, 0.03),
+              np.arange(0, 0.22, 0.02),
+              np.arange(0, 0.11, 0.01),
+              np.arange(0, 0.044, 0.004)]
+
+    parameter_sweep(TemporalDifferenceLambda, 50, lambdas, alphas)
+
+
+def figure_12_8():
+    """
+    True online TD(lambda) algorithm
+    """
+    lambdas = [0.0, 0.4, 0.8, 0.9, 0.95, 0.975, 0.99, 1]
+    alphas = [np.arange(0, 1.1, 0.1),
+              np.arange(0, 1.1, 0.1),
+              np.arange(0, 1.1, 0.1),
+              np.arange(0, 1.1, 0.1),
+              np.arange(0, 1.1, 0.1),
+              np.arange(0, 0.88, 0.08),
+              np.arange(0, 0.44, 0.04),
+              np.arange(0, 0.11, 0.01)]
+    parameter_sweep(TrueOnlineTemporalDifferenceLambda, 50, lambdas, alphas)
+
+
 if __name__ == '__main__':
-    figure_12_3()
+    # figure_12_3()
+    # figure_12_6()
+    figure_12_8()
